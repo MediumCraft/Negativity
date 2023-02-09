@@ -1,4 +1,4 @@
-name: Build Negativity
+name: Build Negativity [Upload to Discord]
 
 # For each push on all branchs
 on: [push]
