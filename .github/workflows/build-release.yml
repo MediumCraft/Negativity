@@ -45,9 +45,10 @@ jobs:
         files: |
           build/libs/*.jar
         tag_name: automated-builds
-        name: Automated Release ${{ github.ref }}
+        name: Automated Release
         body: |
           This is an automated release, it have not been tested yet.
+          This release will trigger whenever a Git push happens to the project.
+          It will also upload an artifact. But artifacts require an GitHub account.
       env:
         GITHUB_REPOSITORY: MediumCraft/Negativity
-      
