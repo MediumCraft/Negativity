@@ -42,7 +42,12 @@ jobs:
       uses: softprops/action-gh-release@v1
       with: 
         token: ${{ secrets.GITHUB_TOKEN }}
-        files: build/libs/*.jar
+        files: |
+          build/libs/*.jar
+        tag_name: automated-builds
+        name: Automated Release ${{ github.ref }}
+        body: |
+          This is an automated release, it have not been tested yet.
       env:
         GITHUB_REPOSITORY: MediumCraft/Negativity
       
