@@ -27,6 +27,9 @@ task prepareServer(type: Copy) {
     }
 }
 
+task continue() {
+}
+
 build.dependsOn shadowJar
 
 tasks.named('javadoc') {
