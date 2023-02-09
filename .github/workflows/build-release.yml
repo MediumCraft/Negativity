@@ -32,5 +32,6 @@ jobs:
       # continue even if there is an issue to save all cache
       continue-on-error: true
     - name: Upload Artifact
+      uses: actions/upload-artifact@v3
       with:
         path: build/libs/*.jar
