@@ -12,13 +12,6 @@ shadowJar {
     mergeServiceFiles()
 }
 
-task continue {
-    doLast {
-        // Do nothing
-    }
-}
-
-
 task prepareServer(type: Copy) {
     from shadowJar.outputs
     def pluginRename = System.getProperty('plugins.rename')
