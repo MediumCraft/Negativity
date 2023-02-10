@@ -27,10 +27,6 @@ task prepareServer(type: Copy) {
     }
 }
 
-task continue(type:Exec) {
-    continueOnError true
-}
-
 
 build.dependsOn shadowJar
 
