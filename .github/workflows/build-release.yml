@@ -1,7 +1,11 @@
 name: Build Negativity
 
-# For each push on all branchs
-on: [push]
+# For each push on all branches
+on:
+  push:
+    branches:
+      - '*'
+  workflow_dispatch:
 
 permissions:
   contents: write
