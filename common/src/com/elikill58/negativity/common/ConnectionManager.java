@@ -40,7 +40,7 @@ public class ConnectionManager implements Listeners {
 		NegativityPlayer np = e.getNegativityPlayer();
 		if(!Adapter.getAdapter().getPlatformID().isProxy())
 			np.delta = np.lastDelta = p.getLocation().clone();
-		np.invincibilityTicks += 10;
+		np.addInvincibilityTicks(10, "Connection");
 		Adapter.getAdapter().debug(Debug.GENERAL, "Player " + p.getName() + " just connect using protocol " + p.getProtocolVersion() + " (version: " + p.getPlayerVersion().getName() + "). EntityId: " + p.getEntityId());
 		if(UniversalUtils.isMe(p.getUniqueId()))
 			p.sendMessage(ChatColor.GREEN + "Ce serveur utilise Negativity ! Waw :')");
@@ -100,6 +100,7 @@ public class ConnectionManager implements Listeners {
 
 	@EventListener
 	public void onLogin(LoginEvent e) {
+		NegativityPlayer.removeFromCache(e.getUUID()); // remove all possible old things
 		if(!BanManager.shouldNegativityHandleBans() || !e.getLoginResult().equals(Result.ALLOWED) || !BanManager.banActive) // already kicked or ban not enabled
 			return;
 		UUID playerId = e.getUUID();
@@ -127,7 +128,7 @@ public class ConnectionManager implements Listeners {
 	@EventListener
 	public void onTeleport(PlayerTeleportEvent e) {
 		Player p = e.getPlayer();
-		NegativityPlayer.getNegativityPlayer(p).invincibilityTicks += 5;
+		NegativityPlayer.getNegativityPlayer(p).addInvincibilityTicks(5, "Teleportation");
 	}
 	
 	@EventListener
