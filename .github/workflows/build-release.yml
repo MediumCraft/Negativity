@@ -31,6 +31,9 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
         restore-keys: |
           ${{ runner.os }}-gradle-
+    - name: Set outputs
+      id: short_sha
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     - name: Grant execute permission for all runners
       run: chmod +x gradlew
     - id: build-gradle
@@ -41,18 +44,22 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
+        name: artifact-${{ steps.short_sha.outputs.sha_short }}
         path: build/libs/*.jar
     - name: Release Files
       uses: softprops/action-gh-release@v1
       with: 
+        
         token: ${{ secrets.GITHUB_TOKEN }}
         files: |
           build/libs/*.jar
-        tag_name: automated-builds
-        name: Automated Release
+        tag_name: commit-${{ steps.short_sha.outputs.sha_short }}
+        name: Negativity Automation Compile ${{ steps.short_sha.outputs.sha_short }}
         body: |
+          Commit ${{ steps.short_sha.outputs.sha_short }}
           This is an automated release, it have not been tested yet.
           This release will trigger whenever a Git push happens to the project.
           It will also upload an artifact. But artifacts require an GitHub account.
+        generate_release_notes: true
       env:
         GITHUB_REPOSITORY: MediumCraft/Negativity
