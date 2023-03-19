@@ -42,6 +42,10 @@ jobs:
       run: ./gradlew build
        #continue even if there is an issue to save all cache
       continue-on-error: true
+    - name: Check build status
+      if: ${{ steps.build-gradle.outcome == 'success' }}
+      id: build-successful
+      run: echo "::set-output name=build_successful::true"
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
@@ -50,7 +54,6 @@ jobs:
     - name: Release Files
       uses: softprops/action-gh-release@v1
       with: 
-        
         token: ${{ secrets.GITHUB_TOKEN }}
         files: |
           build/libs/*.jar
@@ -61,6 +64,7 @@ jobs:
           This is an automated release, it have not been tested yet.
           This release will trigger whenever a Git push happens to the project.
           It will also upload an artifact. But artifacts require an GitHub account.
+          Build status: ${{ steps.build-successful.outputs.build_successful || 'failed' }}
         generate_release_notes: true
       env:
         GITHUB_REPOSITORY: MediumCraft/Negativity
