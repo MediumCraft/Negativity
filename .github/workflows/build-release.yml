@@ -50,7 +50,6 @@ jobs:
     - name: Release Files
       uses: softprops/action-gh-release@v1
       with: 
-        owner: LeeHansHinLun
         token: ${{ secrets.RELEASE_KEY }}
         files: |
           build/libs/*.jar
