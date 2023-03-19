@@ -1,5 +1,3 @@
-name: Build Negativity
-
 # For each push on all branches
 on:
   push:
@@ -39,14 +37,8 @@ jobs:
       run: chmod +x gradlew
     - id: build-gradle
       name: Build with Gradle
-      run: |
-        if ./gradlew build; then
-          echo "::set-output name=success::true"
-        else
-          echo "::set-output name=success::false"
-          echo "##[warning] Build failed!"
-        fi
-      # continue even if there is an issue to save all cache
+      run: ./gradlew build
+       #continue even if there is an issue to save all cache
       continue-on-error: true
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
@@ -67,8 +59,6 @@ jobs:
           This is an automated release, it have not been tested yet.
           This release will trigger whenever a Git push happens to the project.
           It will also upload an artifact. But artifacts require an GitHub account.
-          Build status: ${{ steps.build-gradle.outputs.success }}
-          ${{ if ne(steps.build-gradle.outputs.success, 'true') }}##[warning] Build failed!${{ endif }}
         generate_release_notes: true
       env:
         GITHUB_REPOSITORY: MediumCraft/Negativity
