@@ -1,3 +1,5 @@
+name: Build Negativity
+
 # For each push on all branches
 on:
   push:
