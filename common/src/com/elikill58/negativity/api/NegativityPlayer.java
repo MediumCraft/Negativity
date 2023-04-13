@@ -44,6 +44,7 @@ import com.elikill58.negativity.universal.detections.Cheat.CheatDescription;
 import com.elikill58.negativity.universal.detections.Cheat.CheatHover;
 import com.elikill58.negativity.universal.detections.keys.CheatKeys;
 import com.elikill58.negativity.universal.detections.keys.IDetectionKey;
+import com.elikill58.negativity.universal.permissions.Perm;
 import com.elikill58.negativity.universal.playerModifications.PlayerModificationsManager;
 import com.elikill58.negativity.universal.report.ReportType;
 import com.elikill58.negativity.universal.utils.UniversalUtils;
@@ -97,7 +98,7 @@ public class NegativityPlayer {
 	private String clientName, invincibilityReason = "";
 	private @Nullable ScheduledTask fightCooldownTask;
 	// one thread per person
-	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private final ExecutorService executor;
 
 	public NegativityPlayer(Player p) {
 		this.p = p;
@@ -105,7 +106,8 @@ public class NegativityPlayer {
 		this.loginTime = System.currentTimeMillis();
 		this.clientName = "Not loaded";
 		this.isBedrockPlayer = BedrockPlayerManager.isBedrockPlayer(p.getUniqueId());
-
+		this.executor = Executors.newSingleThreadExecutor((r) -> new Thread(r, "negativity-player-" + p.getName()));
+		
 		// add processors like this: checkProcessors.add(new
 		// SpiderExampleCheckProcessor(this));
 		checkProcessors.add(new ScaffoldRiseCheckProcessor(this));
@@ -187,6 +189,9 @@ public class NegativityPlayer {
 			return false;
 		if (c.isDisabledForJava() && !BedrockPlayerManager.isBedrockPlayer(getUUID()))
 			return false;
+		if(Negativity.hasBypass && (Perm.hasPerm(NegativityPlayer.getNegativityPlayer(p), "bypass." + c.getKey().getLowerKey())
+				|| Perm.hasPerm(NegativityPlayer.getNegativityPlayer(p), Perm.BYPASS_ALL)))
+			return false;
 		Adapter ada = Adapter.getAdapter();
 		if (ada.getConfig().getDouble("tps_alert_stop") > ada.getLastTPS()) // to make TPS go upper
 			return false;
@@ -221,6 +226,9 @@ public class NegativityPlayer {
 			return "Bedrock user";
 		if (c.isDisabledForJava() && !BedrockPlayerManager.isBedrockPlayer(getUUID()))
 			return "Java user";
+		if(Negativity.hasBypass && (Perm.hasPerm(NegativityPlayer.getNegativityPlayer(p), "bypass." + c.getKey().getLowerKey())
+				|| Perm.hasPerm(NegativityPlayer.getNegativityPlayer(p), Perm.BYPASS_ALL)))
+			return "Bypass permission";
 		Adapter ada = Adapter.getAdapter();
 		if (ada.getConfig().getDouble("tps_alert_stop") > ada.getLastTPS()) // to make TPS go upper
 			return "Low TPS";
