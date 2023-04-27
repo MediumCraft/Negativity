@@ -60,6 +60,10 @@ subprojects {
             name = "ViaVersion"
             url = "https://repo.viaversion.com"
         }
+        maven {
+            name = "JitPack"
+            url = "https://jitpack.io"
+        }
     }
 
     dependencies {
