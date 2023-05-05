@@ -45,7 +45,7 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: artifact-${{ steps.short_sha.outputs.sha_short }}
+        name: negativity-${{ steps.short_sha.outputs.sha_short }}
         path: build/libs/*.jar
     - name: Release Files
       uses: softprops/action-gh-release@v1
