@@ -1,0 +1,65 @@
+name: Build Negativity
+
+# For each push on all branches
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 17
+        cache: 'gradle'
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/.m2
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    - name: Set outputs
+      id: short_sha
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Grant execute permission for all runners
+      run: chmod +x gradlew
+    - id: build-gradle
+      name: Build with Gradle
+      run: ./gradlew build
+       #continue even if there is an issue to save all cache
+      continue-on-error: true
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: negativity-${{ steps.short_sha.outputs.sha_short }}
+        path: build/libs/*.jar
+    - name: Release Files
+      uses: softprops/action-gh-release@v1
+      with: 
+        token: ${{ secrets.RELEASE_KEY }}
+        files: |
+          build/libs/*.jar
+        tag_name: commit-${{ steps.short_sha.outputs.sha_short }}
+        name: Negativity Automation Compile ${{ steps.short_sha.outputs.sha_short }}
+        body: |
+          Commit ${{ steps.short_sha.outputs.sha_short }}
+          This is an automated release, it have not been tested yet.
+          This release will trigger whenever a Git push happens to the project.
+          It will also upload an artifact. But artifacts require an GitHub account.
+        generate_release_notes: true
+      env:
+        GITHUB_REPOSITORY: MediumCraft/Negativity
