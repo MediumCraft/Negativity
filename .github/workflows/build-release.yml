@@ -14,52 +14,64 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: 17
-        cache: 'gradle'
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-          ~/.m2
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: Set outputs
-      id: short_sha
-      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-    - name: Grant execute permission for all runners
-      run: chmod +x gradlew
-    - id: build-gradle
-      name: Build with Gradle
-      run: ./gradlew build
-       #continue even if there is an issue to save all cache
-      continue-on-error: true
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: negativity-${{ steps.short_sha.outputs.sha_short }}
-        path: build/libs/*.jar
-    - name: Release Files
-      uses: softprops/action-gh-release@v1
-      with: 
-        token: ${{ secrets.RELEASE_KEY }}
-        files: |
-          build/libs/*.jar
-        tag_name: commit-${{ steps.short_sha.outputs.sha_short }}
-        name: Negativity Automation Compile ${{ steps.short_sha.outputs.sha_short }}
-        body: |
-          Commit ${{ steps.short_sha.outputs.sha_short }}
-          This is an automated release, it have not been tested yet.
-          This release will trigger whenever a Git push happens to the project.
-          It will also upload an artifact. But artifacts require an GitHub account.
-        generate_release_notes: true
-      env:
-        GITHUB_REPOSITORY: MediumCraft/Negativity
+      - name: Checkout latest code
+        uses: actions/checkout@v2
+
+      - name: Set outputs
+        id: vars
+        #run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Setup build cache
+        uses: actions/cache@v2.1.6
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      - name: Gradle Permission
+        run: chmod +x ./gradlew
+      
+      - name: Build with Gradle
+        run: ./gradlew build --full-stacktrace
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Negativity-${{ steps.vars.outputs.sha_short }}
+          path: build/libs
+      
+      - name: Generate Release Draft
+        id: release-drafter
+        uses: release-drafter/release-drafter@v5
+        with:
+          token: ${{ secrets.RELEASE_KEY }}
+          config-path: .github/release-drafter.yml
+          name: Changelog Draft (Internal)
+          publish: false
+          tag: latest-changelog-draft
+      
+      - name: Release Files
+        uses: softprops/action-gh-release@v1
+        with: 
+          token: ${{ secrets.RELEASE_KEY }}
+          files: |
+            build/libs/*.jar
+          tag_name: commit-${{ steps.vars.outputs.sha_short }}
+          name: Negativity ${{ steps.vars.outputs.sha_short }}
+          body: |
+            Commit ${{ steps.vars.outputs.sha_short }}
+            Negativity
+            ${{ steps.release-drafter.outputs.body }}
+          generate_release_notes: true
+        env:
+          GITHUB_REPOSITORY: MediumCraft/Negativity
