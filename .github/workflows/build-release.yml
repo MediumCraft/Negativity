@@ -50,16 +50,6 @@ jobs:
           name: Negativity-${{ steps.vars.outputs.sha_short }}
           path: build/libs
       
-      - name: Generate Release Draft
-        id: release-drafter
-        uses: release-drafter/release-drafter@v5
-        with:
-          token: ${{ secrets.RELEASE_KEY }}
-          config-path: .github/release-drafter.yml
-          name: Changelog Draft (Internal)
-          publish: false
-          tag: latest-changelog-draft
-      
       - name: Release Files
         uses: softprops/action-gh-release@v1
         with: 
@@ -71,7 +61,6 @@ jobs:
           body: |
             Commit ${{ steps.vars.outputs.sha_short }}
             Negativity
-            ${{ steps.release-drafter.outputs.body }}
           generate_release_notes: true
         env:
           GITHUB_REPOSITORY: MediumCraft/Negativity
