@@ -5,9 +5,11 @@ import java.util.List;
 import com.elikill58.negativity.api.yaml.Configuration;
 import com.elikill58.negativity.universal.Adapter;
 import com.elikill58.negativity.universal.webhooks.integrations.DiscordWebhook;
+import com.elikill58.negativity.universal.webhooks.integrations.TelegramWebhook;
 import com.elikill58.negativity.universal.webhooks.messages.WebhookMessage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class WebhookManager {
 	
@@ -34,6 +36,8 @@ public class WebhookManager {
 			}
 			if(type.equalsIgnoreCase("discord")) {
 				WEBHOOKS.add(new DiscordWebhook(hook));
+			} else if(type.equalsIgnoreCase("telegram")) {
+				WEBHOOKS.add(new TelegramWebhook(hook));
 			} else {
 				ada.getLogger().warn("Unknow webhook type " + type + ".");
 			}
@@ -48,7 +52,7 @@ public class WebhookManager {
 			return;
 		WEBHOOKS.forEach((w) -> {
 			try {
-				w.send(msg);
+				w.send(msg.getMessageType(), msg.getConcerned(), Arrays.asList(msg));
 			} catch (Exception e) {
 				Adapter.getAdapter().getLogger().error("Error while using webhook " + w.getWebhookName() + ": " + e.getMessage() + " (" + e.getStackTrace()[0].toString() + ")");
 			}
