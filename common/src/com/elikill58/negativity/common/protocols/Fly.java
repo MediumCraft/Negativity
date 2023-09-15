@@ -100,8 +100,6 @@ public class Fly extends Cheat implements Listeners {
 		}
 
 		boolean onGround = p.isOnGround();
-		boolean hasBoatAround = p.getWorld().getEntities().stream().filter((entity) -> entity.getType().equals(EntityType.BOAT) && entity.getLocation().distance(loc) < 3).findFirst()
-				.isPresent();
 		if (p.getFallDistance() <= 0.000001 && !p.isInsideVehicle() && onGround == data.wasOnGround) {
 			double i = to.toVector().distance(from.toVector());
 			int amount = 0;
@@ -131,7 +129,7 @@ public class Fly extends Cheat implements Listeners {
 					LocationUtils.teleportPlayerOnGround(p);
 			}
 		}
-		if ((onGround && data.wasOnGround) || (d > 0.1 || d < -0.1) || hasBoatAround || p.isInsideVehicle() || !e.getTo().clone().add(0, 2, 0).getBlock().getType().isTransparent()
+		if ((onGround && data.wasOnGround) || (d > 0.1 || d < -0.1) || LocationUtils.hasBoatAroundHim(p.getWorld(), e.getTo()) || p.isInsideVehicle() || !e.getTo().clone().add(0, 2, 0).getBlock().getType().isTransparent()
 				|| isInWater || isOnWater || e.getTo().getBlockChecker(1.5).has("FENCE", "SLIME", "LILY", "VINE", "STAIRS", "BED", "WEB", "SNOW", "COBWEB"))
 			data.flyMove.clear();
 		else
@@ -141,7 +139,7 @@ public class Fly extends Cheat implements Listeners {
 	}
 
 	@Check(name = "ground-checker", description = "Check for ground on no-ground packet", conditions = { CheckConditions.NO_INSIDE_VEHICLE, CheckConditions.NO_FLY,
-			CheckConditions.NO_USE_SLIME, CheckConditions.NO_CLIMB_BLOCK, CheckConditions.SURVIVAL, CheckConditions.NO_MID_ENTITY_AROUND })
+			CheckConditions.NO_USE_SLIME, CheckConditions.NO_CLIMB_BLOCK, CheckConditions.SURVIVAL, CheckConditions.NO_MID_ENTITY_AROUND, CheckConditions.NO_LIQUID_AROUND })
 	public void onGroundChecker(PacketReceiveEvent e, NegativityPlayer np, FlyData data) {
 		Player p = e.getPlayer();
 		NPacket packet = e.getPacket();
