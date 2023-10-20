@@ -64,7 +64,7 @@ public class NegativityPlayer {
 
 	// packets
 	public Object2IntMap<PacketType> packets = new Object2IntArrayMap<>();
-	public int allPackets = 0, lastClick = 0, invincibilityTicks = 0;
+	public int lastClick = 0, invincibilityTicks = 0;
 
 	// setBack
 	public int noFallDamage = 0, idWaitingAppliedVelocity = -1;
@@ -75,7 +75,7 @@ public class NegativityPlayer {
 	public long loginTime;
 	public int rightBlockClick = 0, leftBlockClick = 0, entityClick = 0, leftCancelled = 0, leftFinished = 0, iceCounter = 0, blockAbove = 0, ticks = 0;
 	public FlyingReason flyingReason = FlyingReason.REGEN;
-	public boolean isOnLadders = false, isTeleporting = false;
+	public boolean isOnLadders = false, isTeleporting = false, cancelNextFlyingPacket = false;
 	public List<Location> lastLocations = new ArrayList<>();
 	public ConcurrentHashMap<IDetectionKey<?>, CheckData> checkDatas = new ConcurrentHashMap<>();
 
@@ -156,6 +156,33 @@ public class NegativityPlayer {
 	}
 
 	/**
+	 * Check for general reason. If this return false, no check would be applied.
+	 * 
+	 * @return true if can be checked
+	 */
+	public boolean canBeCheck() {
+		if (Negativity.tpsDrop || buggedVersion || disconnecting)
+			return false;
+		if (invincibilityTicks > 0)
+			return false;
+		if (isFreeze)
+			return false;
+		if(Negativity.hasBypass && Perm.hasPerm(this, Perm.BYPASS_ALL))
+			return false;
+		if (Negativity.tpsDropStop > Adapter.getAdapter().getLastTPS()) // to make TPS go upper
+			return false;
+		Player p = getPlayer();
+		if (p.getGameMode().equals(GameMode.SPECTATOR) || p.getGameMode().equals(GameMode.CREATIVE))
+			return false;
+		if(!hadValidPing) {
+			if(hadValidPing = (p.getPing() > 0)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * Check if the player have be detected for the given cheat It also check for
 	 * bypass and TPS drop
 	 * 
@@ -163,11 +190,9 @@ public class NegativityPlayer {
 	 * @return true if the player can be detected
 	 */
 	public boolean hasDetectionActive(Cheat c) {
-		if (!c.isActive() || Negativity.tpsDrop || buggedVersion || disconnecting)
+		if(!canBeCheck())
 			return false;
-		if (invincibilityTicks > 0)
-			return false;
-		if (isFreeze)
+		if (!c.isActive())
 			return false;
 		if (isInFight && c.hasOption(CheatDescription.NO_FIGHT))
 			return false;
@@ -175,14 +200,9 @@ public class NegativityPlayer {
 			return false;
 		if (c.isDisabledForJava() && !BedrockPlayerManager.isBedrockPlayer(getUUID()))
 			return false;
-		if(Negativity.hasBypass && (Perm.hasPerm(this, "bypass." + c.getKey().getLowerKey())
-				|| Perm.hasPerm(this, Perm.BYPASS_ALL)))
-			return false;
-		if (Negativity.tpsDropStop > Adapter.getAdapter().getLastTPS()) // to make TPS go upper
+		if(Negativity.hasBypass && (Perm.hasPerm(this, "bypass." + c.getKey().getLowerKey())))
 			return false;
 		Player p = getPlayer();
-		if (p.getGameMode().equals(GameMode.SPECTATOR) || p.getGameMode().equals(GameMode.CREATIVE))
-			return false;
 		if (c.getCheatCategory().equals(CheatCategory.MOVEMENT)) {
 			if (PlayerModificationsManager.shouldIgnoreMovementChecks(p))
 				return false;
@@ -193,11 +213,6 @@ public class NegativityPlayer {
 			return false;
 		if (BypassManager.hasBypass(p, c))
 			return false;
-		if(!hadValidPing) {
-			if(hadValidPing = (p.getPing() > 0)) {
-				return false;
-			}
-		}
 		return p.getPing() < c.getMaxAlertPing();
 	}
 
