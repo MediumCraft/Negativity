@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v2.1.6
         with:
           path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('*.gradle') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
       
@@ -43,6 +43,11 @@ jobs:
       
       - name: Build with Gradle
         run: ./gradlew build --full-stacktrace
+        
+      - name: Archive Repository
+        run: |
+          # Create a zip file of the entire repository contents
+          zip -r dev_env.zip .
       
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -50,12 +55,19 @@ jobs:
           name: Negativity-${{ steps.vars.outputs.sha_short }}
           path: build/libs
       
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: dev_env-${{ steps.vars.outputs.sha_short }}
+          path: dev_env.zip
+      
       - name: Release Files
         uses: softprops/action-gh-release@v1
         with: 
           token: ${{ secrets.RELEASE_KEY }}
           files: |
             build/libs/*.jar
+            dev_env.zip
           tag_name: commit-${{ steps.vars.outputs.sha_short }}
           name: Negativity ${{ steps.vars.outputs.sha_short }}
           body: |
