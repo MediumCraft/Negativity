@@ -160,6 +160,7 @@ public class PlayersEvents implements Listener {
 		WebhookManager.getWebhooks().forEach(w -> w.clean(e.getPlayer()));
 	}
 
+	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void slimeManager(PlayerMoveEvent e){
 		Player p = e.getPlayer();
@@ -190,8 +191,10 @@ public class PlayersEvents implements Listener {
 		SpigotNegativityPlayer.getNegativityPlayer(p).mustToBeSaved = true;
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void onTeleport(PlayerTeleportEvent e) {
+		if(e.isCancelled())
+			return;
 		SpigotNegativityPlayer.getNegativityPlayer(e.getPlayer()).TIME_INVINCIBILITY = System.currentTimeMillis() + 2000;
 	}
 	

@@ -31,7 +31,7 @@ public class InventoryMoveProtocol extends Cheat implements Listener {
 		Player p = e.getPlayer();
 		SpigotNegativityPlayer np = SpigotNegativityPlayer.getNegativityPlayer(p);
 		if (!np.hasDetectionActive(this) || np.isUsingTrident() || np.hasElytra() || p.isInsideVehicle() || p.getFallDistance() > 0.5 || np.inventoryMoveData == null
-				|| LocationUtils.isInWater(new SpigotLocation(p.getLocation())) || p.getVelocity().length() > 0.1) {
+				|| LocationUtils.isInWater(new SpigotLocation(p.getLocation())) || p.getVelocity().length() > 0.1 || !np.inventoryMoveData.active || LocationUtils.hasMaterialsAround(new SpigotLocation(e.getFrom()), "PISTON")) {
 			Adapter.getAdapter().debug("Velocity length: " + p.getVelocity().length());
 			return;
 		}
@@ -66,7 +66,7 @@ public class InventoryMoveProtocol extends Cheat implements Listener {
 
 	@EventHandler
 	public void onClick(InventoryClickEvent e) {
-		if (!(e.getWhoClicked() instanceof Player) || e.getClickedInventory() == null || !e.getSlotType().equals(SlotType.CONTAINER))
+		if (!(e.getWhoClicked() instanceof Player) || e.getClickedInventory() == null || !e.getSlotType().equals(SlotType.CONTAINER) || e.isCancelled())
 			return;
 		SpigotNegativityPlayer np = SpigotNegativityPlayer.getNegativityPlayer((Player) e.getWhoClicked());
 		if (!np.hasDetectionActive(this))
@@ -76,7 +76,7 @@ public class InventoryMoveProtocol extends Cheat implements Listener {
 
 	@EventHandler
 	public void onOpen(InventoryOpenEvent e) {
-		if (!(e.getPlayer() instanceof Player))
+		if (!(e.getPlayer() instanceof Player) || e.isCancelled())
 			return;
 		SpigotNegativityPlayer np = SpigotNegativityPlayer.getNegativityPlayer((Player) e.getPlayer());
 		if (!np.hasDetectionActive(this))
@@ -87,14 +87,13 @@ public class InventoryMoveProtocol extends Cheat implements Listener {
 	@EventHandler
 	public void onClose(InventoryCloseEvent e) {
 		if (e.getPlayer() instanceof Player)
-			SpigotNegativityPlayer.getNegativityPlayer((Player) e.getPlayer()).inventoryMoveData = null;
-		Adapter.getAdapter().debug("InvClose " + e.getPlayer().getName());
+			SpigotNegativityPlayer.getNegativityPlayer((Player) e.getPlayer()).inventoryMoveData.reset((Player) e.getPlayer());
 	}
 
 	private void checkInvMove(SpigotNegativityPlayer np, Player p, String from) {
 		if (np.hasElytra() || p.isInsideVehicle() || p.getLocation().getBlock().getType().name().contains("WATER"))
 			return;
-		np.inventoryMoveData = new InventoryMoveData(np);
+		np.inventoryMoveData.active = true;
 	}
 
 	@Override
@@ -104,14 +103,13 @@ public class InventoryMoveProtocol extends Cheat implements Listener {
 
 	public static class InventoryMoveData {
 
-		public SpigotNegativityPlayer np;
+		public Player p;
 		public double distance = 0, distanceXZ = 0;
 		public int timeSinceOpen = 0;
 		public boolean sprint, sneak, active;
 
-		public InventoryMoveData(SpigotNegativityPlayer np) {
-			this.np = np;
-			reset();
+		public InventoryMoveData() {
+			reset(null);
 		}
 
 		public void update(double distance, double distanceXZ) {
@@ -120,9 +118,9 @@ public class InventoryMoveProtocol extends Cheat implements Listener {
 			this.timeSinceOpen++;
 		}
 
-		public void reset() {
-			this.sprint = np.getPlayer().isSprinting();
-			this.sneak = np.getPlayer().isSneaking();
+		public void reset(Player p) {
+			this.sprint = p == null ? false : p.isSprinting();
+			this.sneak = p == null ? false : p.isSneaking();
 			this.active = false;
 			this.distance = 0;
 			this.distanceXZ = 0;

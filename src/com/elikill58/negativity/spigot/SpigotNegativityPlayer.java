@@ -92,7 +92,7 @@ public class SpigotNegativityPlayer extends NegativityPlayer {
 	public FlyingReason flyingReason = FlyingReason.REGEN;
 	public Material eatMaterial = Material.AIR, lastClick = Material.AIR;
 	public Location lastSpiderLoc;
-	public InventoryMoveData inventoryMoveData = null;
+	public InventoryMoveData inventoryMoveData = new InventoryMoveData();
 	public List<String> proof = new ArrayList<>();
 	public boolean isInFight = false;
 	public BukkitTask fightTask = null;
@@ -168,7 +168,7 @@ public class SpigotNegativityPlayer extends NegativityPlayer {
 	}
 
 	public boolean hasDetectionActive(Cheat c) {
-		if (!c.isActive() || SpigotNegativity.timeDrop)
+		if (!c.isActive() || UniversalUtils.TPS_DROP)
 			return false;
 		if (TIME_INVINCIBILITY > System.currentTimeMillis())
 			return false;
@@ -193,7 +193,7 @@ public class SpigotNegativityPlayer extends NegativityPlayer {
 	public String getWhyDetectionNotActive(Cheat c) {
 		if (!c.isActive())
 			return "Cheat disabled";
-		if (SpigotNegativity.timeDrop)
+		if (UniversalUtils.TPS_DROP)
 			return "TPS drop";
 		if (TIME_INVINCIBILITY > System.currentTimeMillis())
 			return "Player invincibility";
@@ -432,6 +432,7 @@ public class SpigotNegativityPlayer extends NegativityPlayer {
 		getPlayer().kickPlayer(Messages.getMessage(getPlayer(), "ban.kick_" + (def ? "def" : "time"), "%reason%", reason, "%time%", String.valueOf(time), "%by%", by));
 	}
 
+	@SuppressWarnings("deprecation")
 	public boolean isOnGround() {
 		return isOnGround || getPlayer().isOnGround();
 	}
