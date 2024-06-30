@@ -33,7 +33,7 @@ import io.netty.channel.ChannelFuture;
 public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 
 	protected Method getPlayerHandle, getEntityLookup, getBukkitEntity;
-	protected Field recentTpsField, pingField, tpsField, playerConnectionField;
+	protected Field recentTpsField, tpsField, playerConnectionField;
 	protected Field minX, minY, minZ, maxX, maxY, maxZ, entityLookup;
 	protected Object dedicatedServer;
 
@@ -49,23 +49,15 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 
 			getPlayerHandle = PacketUtils.getObcClass("entity.CraftPlayer").getDeclaredMethod("getHandle");
 
-			Class<?> entityPlayerClass = PacketUtils.getNmsClass("EntityPlayer", "server.level.");
-			if (version.isNewerOrEquals(Version.V1_20_2)) {
-				Class<?> ServerCommonPacketListenerImplClass = PacketUtils.getNmsClass("ServerCommonPacketListenerImpl", "server.network.");
-				pingField = ServerCommonPacketListenerImplClass.getDeclaredField("i");
-				pingField.setAccessible(true);
-				playerConnectionField = entityPlayerClass.getDeclaredField("c");
-			} else if (version.isNewerOrEquals(Version.V1_20)) {
-				pingField = entityPlayerClass.getDeclaredField("f");
-				playerConnectionField = entityPlayerClass.getDeclaredField("c");
+			Class<?> entityPlayerClass = PacketUtils.getNmsClass(SubPlatform.getSubPlatform().equals(SubPlatform.FOLIA) ? "ServerPlayer" : "EntityPlayer", "server.level.");
+			if (version.isNewerOrEquals(Version.V1_20)) {
+				playerConnectionField = entityPlayerClass.getDeclaredField(SubPlatform.getSubPlatform().equals(SubPlatform.FOLIA) ? "connection" : "c");
 			} else if (version.isNewerOrEquals(Version.V1_17)) {
-				pingField = entityPlayerClass.getDeclaredField("e");
 				playerConnectionField = entityPlayerClass.getDeclaredField("b");
 			} else {
-				pingField = entityPlayerClass.getDeclaredField("ping");
 				playerConnectionField = entityPlayerClass.getDeclaredField("playerConnection");
 			}
-			Class<?> bbClass = PacketUtils.getNmsClass("AxisAlignedBB", "world.phys.");
+			Class<?> bbClass = PacketUtils.getNmsClass(SubPlatform.getSubPlatform().equals(SubPlatform.FOLIA) ? "AABB" : "AxisAlignedBB", "world.phys.");
 
 			if (version.isNewerOrEquals(Version.V1_13) && hasMinField(bbClass)) {
 				minX = bbClass.getDeclaredField("minX");
@@ -87,7 +79,7 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 			this.getBukkitEntity = PacketUtils.getNmsClass("Entity", "world.entity.").getDeclaredMethod("getBukkitEntity");
 
 			if (version.isNewerOrEquals(Version.V1_17)) {
-				Class<?> worldServer = PacketUtils.getNmsClass("WorldServer", "server.level.");
+				Class<?> worldServer = PacketUtils.getNmsClass(SubPlatform.getSubPlatform().equals(SubPlatform.FOLIA) ? "ServerLevel" : "WorldServer", "server.level.");
 
 				try {
 					getEntityLookup = worldServer.getDeclaredMethod("getEntityLookup");
@@ -110,11 +102,20 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 
 	public double getAverageTps() {
 		try {
-			long[] array = (long[]) tpsField.get(dedicatedServer);
-			long l = 0L;
-			for (long m : array)
-				l += m;
-			return l / array.length;
+			Object tps = tpsField.get(dedicatedServer);
+			if(tps instanceof long[]) {
+				long[] array = (long[]) tps;
+				long l = 0L;
+				for (long m : array)
+					l += m;
+				return l / array.length;
+			} else {
+				double[] array = (double[]) tps;
+				double l = 0L;
+				for (double m : array)
+					l += m;
+				return l / array.length;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return 0;
@@ -129,10 +130,10 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 
 	public int getPlayerPing(Player player) {
 		try {
-			if (version.isNewerOrEquals(Version.V1_20_2)) {
-				return pingField.getInt(getPlayerConnection(player));
+			if (version.isNewerOrEquals(Version.V1_17)) {
+				return (int) player.getClass().getDeclaredMethod("getPing").invoke(player);
 			} else {
-				return pingField.getInt(getPlayerHandle.invoke(player));
+				return PacketUtils.getNmsClass("EntityPlayer", "server.level.").getDeclaredField("ping").getInt(getPlayerHandle.invoke(player));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -168,7 +169,7 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 	public Object getNetworkManager(Player p) {
 		try {
 			Object playerConnection = getPlayerConnection(p);
-			return new PacketContent(playerConnection).getSpecificModifier(PacketUtils.getNmsClass("NetworkManager", "network.")).readSafely(0);
+			return new PacketContent(playerConnection).getSpecificModifier(PacketUtils.getNmsClass(SubPlatform.getSubPlatform().equals(SubPlatform.FOLIA) ? "Connection" : "NetworkManager", "network.")).readSafely(0);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -194,6 +195,7 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 		}
 	}
 
+	@Override
 	public AbstractChannel getPlayerChannel(Player p) {
 		return new NettyChannel(getChannel(p));
 	}
@@ -219,7 +221,7 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 	public BoundingBox getBoundingBox(Entity et) {
 		try {
 			Object ep = PacketUtils.getNMSEntity(et);
-			Object bb = ReflectionUtils.getFirstWith(ep, PacketUtils.getNmsClass("Entity", "world.entity."), PacketUtils.getNmsClass("AxisAlignedBB", "world.phys."));
+			Object bb = ReflectionUtils.getFirstWith(ep, PacketUtils.getNmsClass("Entity", "world.entity."), PacketUtils.getNmsClass(SubPlatform.getSubPlatform().equals(SubPlatform.FOLIA) ? "AABB" : "AxisAlignedBB", "world.phys."));
 
 			double minX = this.minX.getDouble(bb);
 			double minY = this.minY.getDouble(bb);
@@ -320,6 +322,10 @@ public abstract class SpigotVersionAdapter extends VersionAdapter<Player> {
 				return instance = new Spigot_1_20_R2();
 			case "v1_20_R3":
 				return instance = new Spigot_1_20_R3();
+			case "v1_20_R4":
+				return instance = new Spigot_1_20_R4();
+			case "v1_21_R1":
+				return instance = new Spigot_1_21_R1();
 			default:
 				return instance = new Spigot_UnknowVersion(VERSION);
 			}
